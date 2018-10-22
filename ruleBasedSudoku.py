@@ -401,7 +401,6 @@ def solve():
 
 grid_temp = []
 puzzle_num = 1
-total = 0
 with open('sudoku.txt') as sudoku:
     line_num = 1
     for line in sudoku:
@@ -415,7 +414,5 @@ with open('sudoku.txt') as sudoku:
                 grid = grid_temp
                 solve()
                 grid_temp = []
-                total += grid[0].value * 100 + grid[1].value * 10 + grid[2].value
         line_num += 1
 print(str(puzzles_solved) + ' Puzzles were solved.')
-print('The sum of the first three values in all puzzles is ' + str(total))
