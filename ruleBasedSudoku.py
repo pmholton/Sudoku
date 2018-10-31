@@ -28,8 +28,9 @@ class Cell():
         self.value = value_in
         self.candidates = set() 
 
-def printGrid():
+def printGrid(grid_in):
     # Returns the current cell values in a 9x9 array.
+    grid = grid_in
     grid_array = []
     for lines in range(9):
         grid_row = []
@@ -38,8 +39,9 @@ def printGrid():
         grid_array.append(grid_row)
     return grid_array
 
-def solved():
+def solved(grid_in):
     # Returns true if the puzzle is solved.
+    grid = grid_in
     solved = True
     cell_number = 0
     while cell_number < 81 and solved:
@@ -48,8 +50,9 @@ def solved():
         cell_number += 1
     return solved
 
-def getHist(list_in):
+def getHist(grid_in, list_in):
     # Returns a histogram of items in the input list as a dictionary.
+    grid = grid_in
     histogram = {}
     for number in list_in:
         if grid[number].value == 0:
@@ -87,8 +90,9 @@ def getBox(index):
     print("Invalid getBox() index - " + str(index))
     return
 
-def fillCandidates():
+def fillCandidates(grid_in):
     # Fills in cell candidates using basic row, column, and box logic.
+    grid = grid_in
     for cell_number in range(81):
         used_candidates = {0}
         if grid[cell_number].value == 0:
@@ -106,11 +110,12 @@ def fillCandidates():
             # Basic Logic
             used_candidates = set(row) | set(col) | set(box)
             grid[cell_number].candidates = candidate_set - used_candidates
-    return
+    return grid
 
-def soleCandidate():
+def soleCandidate(grid_in):
     # Fills values by travelling cells and filling in
     # cells where there is only one candidate.
+    grid = grid_in
     changes = 0
     for cell in grid:
         if cell.value == 0 and len(cell.candidates) == 1:
@@ -118,18 +123,19 @@ def soleCandidate():
             cell.value = cell.candidates.pop()
             changes += 1
     # print('Sole Candidates - ' + str(changes))
-    return
+    return grid
 
-def uniqueCandidate():
+def uniqueCandidate(grid_in):
     # Fills Values by travelling boxes, rows, and columns and filling in
     # cells which have the only instance of a number in that subsquare.
+    grid = grid_in
     changes = 0
     changed = False
     times_round = 0
     sets_to_check = boxes + rows + cols
     for list_to_check in sets_to_check:
         times_round += 1
-        candidate_hist = getHist(list_to_check)
+        candidate_hist = getHist(grid, list_to_check)
         for candidate_num in candidate_hist:
             if candidate_hist[candidate_num] == 1:
                 for cell_number in list_to_check:
@@ -141,13 +147,14 @@ def uniqueCandidate():
         # When you move from checking boxes to rows or rows to columns,
         # you need to refresh candidates if you've made a change.
         if times_round in (9,18) and changed == True:
-            fillCandidates()
+            fillCandidates(grid)
             changed = False
     # print('Unique Candidates - ' + str(changes))
-    return
+    return grid
 
-def nakedSets():
+def nakedSets(grid_in):
     # Removes candidates by finding naked sets in rows, columns, or boxes
+    grid = grid_in
     pairs = 0
     trips = 0
     quads = 0
@@ -182,16 +189,17 @@ def nakedSets():
                             grid[cell_number].candidates = grid[cell_number].candidates - candidate_quad
 
     # print('Naked Sets: Pairs - ' + str(pairs) + ', Trios - ' + str(trips) + ', Quads - ' + str(quads))
-    return
+    return grid
 
-def hiddenSets():
+def hiddenSets(grid_in):
     # Removes candidates based on hidden sets found in rows, cols, and boxes
+    grid = grid_in
     pairs = 0
     trips = 0
     quads = 0
     sets_to_check = rows + cols + boxes
     for list_to_check in sets_to_check:
-        list_hist = getHist(list_to_check)
+        list_hist = getHist(grid, list_to_check)
         # Checking for pairs
         for pair in combinations(list_to_check, 2):
             if grid[pair[0]].value == 0 and grid[pair[1]].value == 0:
@@ -206,7 +214,7 @@ def hiddenSets():
         # Checking for Triplets
         for trip in combinations(list_to_check, 3):
             if grid[trip[0]].value == 0 and grid[trip[1]].value == 0 and grid[trip[2]].value == 0:
-                cand_hist = getHist(trip)
+                cand_hist = getHist(grid, trip)
                 unique_cand = set()
                 for num in cand_hist:
                     if cand_hist[num] == list_hist[num]:
@@ -218,7 +226,7 @@ def hiddenSets():
         # Checking for Quartets
         for quad in combinations(list_to_check, 4):
             if grid[quad[0]].value == 0 and grid[quad[1]].value == 0 and grid[quad[2]].value == 0 and grid[quad[3]].value == 0:
-                cand_hist = getHist(quad)
+                cand_hist = getHist(grid, quad)
                 unique_cand = set()
                 for num in cand_hist:
                     if cand_hist[num] == list_hist[num]:
@@ -228,21 +236,22 @@ def hiddenSets():
                     for cell_number in quad:
                         grid[cell_number].candidates = grid[cell_number].candidates.intersection(unique_cand)
     # print('Hidden Sets: Pairs - ' + str(pairs) + ', Trios - ' + str(trips) + ', Quads - ' + str(quads))
-    return
+    return grid
 
-def pointingSets():
+def pointingSets(grid_in):
     # Removes candidates traveling box by box, searching box-rows and
     # box-columns to see if all occurrences of a candidate are in that line,
     # then removing that candidate from the greater row or column
+    grid = grid_in
     changes = 0
     sudoku_row = 0
     sudoku_col = 0
 
     for box in boxes:
-        box_hist = getHist(box)
+        box_hist = getHist(grid, box)
         for row in box_rows:
             row_to_check = [box[row[0]], box[row[1]], box[row[2]]]
-            row_hist = getHist(row_to_check)
+            row_hist = getHist(grid, row_to_check)
             for num in row_hist:
                 if row_hist[num] == box_hist[num]:
                     sudoku_row = getRow(row_to_check[0])
@@ -253,7 +262,7 @@ def pointingSets():
                                 changes += 1
         for col in box_cols:
             col_to_check = [box[col[0]], box[col[1]], box[col[2]]]
-            col_hist = getHist(col_to_check)
+            col_hist = getHist(grid, col_to_check)
             for num in col_hist:
                 if col_hist[num] == box_hist[num]:
                     sudoku_col = getCol(col_to_check[0])
@@ -263,19 +272,20 @@ def pointingSets():
                                 grid[cell_number].candidates = grid[cell_number].candidates.difference({num})
                                 changes += 1
     # print('Pointing Sets - ' + str(changes))
-    return
+    return grid
 
-def boxLineIntersection():
+def boxLineIntersection(grid_in):
     # Travels line by line, looks to see if all occurences of a 
     # candidate number are in one box, and removes those candidates 
     # from the rest of the box
+    grid = grid_in
     sudoku_box = 0
     changes = 0
     for line in (rows + cols):
-        line_hist = getHist(line)
+        line_hist = getHist(grid, line)
         for box_start in [0, 3, 6]:
             list_to_check = [line[box_start], line[box_start + 1], line[box_start + 2]]
-            box_hist = getHist(list_to_check)
+            box_hist = getHist(grid, list_to_check)
             for num in box_hist:
                 if box_hist[num] == line_hist[num]:
                     sudoku_box = getBox(list_to_check[0])
@@ -285,17 +295,18 @@ def boxLineIntersection():
                                 grid[cell_num].candidates = grid[cell_num].candidates.difference({num})
                                 changes += 1
     # print('Box-Line Intersection - ' + str(changes))
-    return
+    return grid
 
-def xWing():
+def xWing(grid_in):
     # Removes candidates according to the x-wing strategy.
     # See http://www.sudokuwiki.org/X_Wing_Strategy
+    grid = grid_in
     changes = 0
     for row_combo in combinations(range(9), 2):
         row_a = rows[row_combo[0]]
         row_b = rows[row_combo[1]]
-        row_a_hist = getHist(row_a)
-        row_b_hist = getHist(row_b)
+        row_a_hist = getHist(grid, row_a)
+        row_b_hist = getHist(grid, row_b)
         for num in row_a_hist:
             if num in row_b_hist and row_a_hist[num] == 2 and row_b_hist[num] == 2:
                 matching_cols = []
@@ -313,8 +324,8 @@ def xWing():
     for col_combo in combinations(range(9), 2):
         col_a = cols[col_combo[0]]
         col_b = cols[col_combo[1]]
-        col_a_hist = getHist(col_a)
-        col_b_hist = getHist(col_b)
+        col_a_hist = getHist(grid, col_a)
+        col_b_hist = getHist(grid,col_b)
         for num in col_a_hist:
             if num in col_b_hist and col_a_hist[num] == 2 and col_b_hist[num] == 2:
                 matching_rows = []
@@ -330,60 +341,70 @@ def xWing():
                                     grid[cell_num].candidates = grid[cell_num].candidates.difference({num})
                                     changes += 1
     # print('X-Wing - ' + str(changes))
-    return
+    return grid
 
-def solve():
+def format_grid(grid_in):
+    raw_grid = grid_in
+    grid = []
+    for i in range(len(raw_grid)):
+        for j in range(len(raw_grid[0])):
+            grid.append(Cell(raw_grid[i][j]))
+    return grid
+
+def solve(grid_in):
     # Solves sudoku puzzles or prints the farthest it can get.
     global puzzles_solved
     solution = True
-    while not solved():
-        fillCandidates()
-        pre_grid = printGrid()
-        soleCandidate()
-        if pre_grid != printGrid():
+    grid = format_grid(grid_in)
+
+    while not solved(grid):
+        grid = fillCandidates(grid)
+        pre_grid = printGrid(grid)
+        grid = soleCandidate(grid)
+        if pre_grid != printGrid(grid):
             continue
-        uniqueCandidate()
-        if pre_grid != printGrid():
+        grid = uniqueCandidate(grid)
+        if pre_grid != printGrid(grid):
             continue
 
-        nakedSets()
-        soleCandidate()
-        if pre_grid != printGrid():
+        grid = nakedSets(grid)
+        grid = soleCandidate(grid)
+        if pre_grid != printGrid(grid):
             continue
-        uniqueCandidate()
-        if pre_grid != printGrid():
-            continue
-
-        hiddenSets()
-        soleCandidate()
-        if pre_grid != printGrid():
-            continue
-        uniqueCandidate()
-        if pre_grid != printGrid():
+        grid = uniqueCandidate(grid)
+        if pre_grid != printGrid(grid):
             continue
 
-        pointingSets()
-        soleCandidate()
-        if pre_grid != printGrid():
+        grid = hiddenSets(grid)
+        grid = soleCandidate(grid)
+        if pre_grid != printGrid(grid):
             continue
-        uniqueCandidate()
-        if pre_grid != printGrid():
-            continue
-
-        boxLineIntersection()
-        soleCandidate()
-        if pre_grid != printGrid():
-            continue
-        uniqueCandidate()
-        if pre_grid != printGrid():
+        grid = uniqueCandidate(grid)
+        if pre_grid != printGrid(grid):
             continue
 
-        xWing()
-        soleCandidate()
-        if pre_grid != printGrid():
+        grid = pointingSets(grid)
+        grid = soleCandidate(grid)
+        if pre_grid != printGrid(grid):
             continue
-        uniqueCandidate()
-        if pre_grid != printGrid():
+        grid = uniqueCandidate(grid)
+        if pre_grid != printGrid(grid):
+            continue
+
+        grid = boxLineIntersection(grid)
+        grid = soleCandidate(grid)
+        if pre_grid != printGrid(grid):
+            continue
+        grid = uniqueCandidate(grid)
+        if pre_grid != printGrid(grid):
+            continue
+
+        grid = xWing(grid)
+        grid = soleCandidate(grid)
+        if pre_grid != printGrid(grid):
+            continue
+        grid = uniqueCandidate(grid)
+        if pre_grid != printGrid(grid):
             continue
 
         print('The given sudoku cannot be solved by this program.')
@@ -392,27 +413,29 @@ def solve():
         solution = False
         break
 
-    for lines in printGrid():
-        print(lines)
+    # for lines in printGrid(grid):
+    #     print(lines)
     if solution:
         puzzles_solved += 1
-    return
+    return solution, printGrid(grid)
 
 
 grid_temp = []
 puzzle_num = 1
-with open('sudoku.txt') as sudoku:
-    line_num = 1
-    for line in sudoku:
-        if line_num % 10 == 1:
-            print('\n----==== Sudoku #' + str(puzzle_num) + ' ====----')
-            puzzle_num += 1
-        else:
-            for number in line.strip():
-                grid_temp.append(Cell(int(number)))
-            if len(grid_temp) == 81:
-                grid = grid_temp
-                solve()
-                grid_temp = []
-        line_num += 1
-print(str(puzzles_solved) + ' Puzzles were solved.')
+
+if __name__ == '__main__':
+    with open('sudoku.txt') as sudoku:
+        line_num = 1
+        for line in sudoku:
+            if line_num % 10 == 1:
+                print('\n----==== Sudoku #' + str(puzzle_num) + ' ====----')
+                puzzle_num += 1
+            else:
+                for number in line.strip():
+                    grid_temp.append(Cell(int(number)))
+                if len(grid_temp) == 81:
+                    grid = grid_temp
+                    solve(grid)
+                    grid_temp = []
+            line_num += 1
+    print(str(puzzles_solved) + ' Puzzles were solved.')
